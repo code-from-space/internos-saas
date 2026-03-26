@@ -6,6 +6,7 @@ export default function InternTable({ interns, onUpdateStatus, onDeleteIntern })
           <tr className="bg-gray-50 border-b border-gray-200">
             <th className="p-4 font-semibold text-gray-600">Intern Name</th>
             <th className="p-4 font-semibold text-gray-600">Role</th>
+            <th className="p-4 font-semibold text-gray-600">Email</th>
             <th className="p-4 font-semibold text-gray-600">Mentor</th>
             <th className="p-4 font-semibold text-gray-600">Status</th>
             <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
@@ -22,7 +23,10 @@ export default function InternTable({ interns, onUpdateStatus, onDeleteIntern })
             interns.map((intern) => (
               <tr key={intern.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="p-4 font-medium text-gray-800">{intern.name}</td>
+                
                 <td className="p-4 text-gray-600">{intern.role}</td>
+                <td className="p-4 text-gray-500 text-sm">{intern.email || 'No email set'}</td>
+
                 <td className="p-4 text-gray-600">{intern.mentor}</td>
                 <td className="p-4">
                   <select

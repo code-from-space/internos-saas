@@ -11,6 +11,9 @@ import SkillAuditModal from './components/SkillAuditModal'
 import { Routes, Route } from 'react-router-dom'
 import Analytics from './components/Analytics'
 import Settings from './components/Settings'
+import { createClient } from '@supabase/supabase-js' // <-- Add this to your imports at the top!
+
+
 
 
 function App() {
@@ -43,13 +46,46 @@ function App() {
 
   // 3. Handlers
   const handleAddIntern = async (newInternData) => {
+    // Check if the Admin is actually logged in
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data, error } = await supabase.from('interns').insert([{ name: newInternData.name, role: newInternData.role, user_id: user.id }]).select()
+
+    // 1. THE MAGIC TRICK: Create a temporary, silent connection to Supabase
+    // We do this so creating the new user doesn't accidentally log the Admin out!
+    const silentSupabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY,
+      { auth: { persistSession: false } } // This stops it from saving the login!
+    )
+
+    // 2. Officially Register the Intern in Supabase Authentication
+    const { data: authData, error: authError } = await silentSupabase.auth.signUp({
+      email: newInternData.email,
+      password: newInternData.password,
+    })
+
+    if (authError) {
+      alert("Failed to create login credential: " + authError.message)
+      return // Stop the process if the email already exists or password is too weak
+    }
+
+    // 3. If the account was created successfully, save their profile to the table
+    const { data, error } = await supabase
+      .from('interns')
+      .insert([{ 
+        name: newInternData.name, 
+        role: newInternData.role, 
+        email: newInternData.email,
+        user_id: user.id // The Admin who created them
+      }])
+      .select()
+
     if (error) {
-      alert("Error saving: " + error.message)
+      alert("Account created, but failed to save to table: " + error.message)
     } else if (data) {
       setInterns([...interns, data[0]])
+      setIsModalOpen(false)
+      alert(`Success! ${newInternData.name} can now log in using ${newInternData.email}`)
     }
   }
 
